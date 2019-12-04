@@ -1,0 +1,51 @@
+version: '2'
+
+services:
+  # Postgres container
+  db:
+    image: postgres:latest
+    container_name: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER:test_user
+      - POSTGRES_PASSWORD:1234
+      - POSTGRES_DB:test
+
+  #Backend API container
+  backend:
+    build: ./backend
+    container_name: backend
+    env_file: ./backend/config/env
+    volumes:
+      - ./backend:/home/app/backend
+    depends_on:
+      - db
+    links:
+      - db
+
+
+  # Frontend Container
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    volumes:
+      - ./frontend:/home/app/frontend
+    links:
+      - backend
+
+  #Proxy server nginx,sits in front of others
+  nginx_proxy:
+    build: ./nginx_proxy
+    container_name: nginx_proxy
+    links:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+
+
+volumes:
+  postgres_data:
